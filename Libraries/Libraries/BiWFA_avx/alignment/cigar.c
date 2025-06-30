@@ -848,19 +848,19 @@ void cigar_print_pretty(
     ++i;
   }
   // Print string
-  fprintf(stream,"      ALIGNMENT ");
+  // fprintf(stream,"      ALIGNMENT ");
   cigar_print(stream,cigar,true);
-  fprintf(stream,"\n");
-  fprintf(stream,"      ETRACE    ");
-  cigar_print(stream,cigar,false);
-  fprintf(stream,"\n");
-  fprintf(stream,"      CIGAR     ");
-  cigar_print_SAM_CIGAR(stream,cigar,false);
-  fprintf(stream,"\n");
-  fprintf(stream,"      PATTERN    %s\n",pattern_alg);
-  fprintf(stream,"                 %s\n",ops_alg);
-  fprintf(stream,"      TEXT       %s\n",text_alg);
-  // Free
+  // fprintf(stream,"\n");
+  // fprintf(stream,"      ETRACE    ");
+  // cigar_print(stream,cigar,false);
+  // fprintf(stream,"\n");
+  // fprintf(stream,"      CIGAR     ");
+  // cigar_print_SAM_CIGAR(stream,cigar,false);
+  // fprintf(stream,"\n");
+  // fprintf(stream,"      PATTERN    %s\n",pattern_alg);
+  // fprintf(stream,"                 %s\n",ops_alg);
+  // fprintf(stream,"      TEXT       %s\n",text_alg);
+  // // Free
   free(mem);
 }
 

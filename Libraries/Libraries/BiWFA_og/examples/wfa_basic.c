@@ -153,7 +153,7 @@ int main(int argc, char* argv[]) {
 
     FILE *file2 = fopen("./scores/biwfa_og-score.txt", "w");
     fprintf(file2, "%d %lld %ld\n", score, elapsed_time, peak_memory_kb);
-    fprinf(file2, "%s\n" wf_aligner->cigar)
+    cigar_print_pretty(file2, wf_aligner->cigar, pattern,strlen(pattern),text,strlen(text));
     fclose(file2);
     
     // wavefront_plot_print(stderr, wf_aligner);

@@ -231,22 +231,45 @@ void read_metrics(const char* file_name, int* score, long long* time_taken) {
 
     fclose(file);
 }
-void read_metrics_modded(bool biwfa, const char* file_name, int* score, long long* time_taken, long* memory) {
+void read_metrics_modded(bool biwfa, const char* file_name, int* score, long long* time_taken, long* memory, char* CIGAR) {
     FILE *file = fopen(file_name, "r");
+    char *line = NULL;
+    size_t len = 0;
     if (!file) {
         perror("Error opening score.txt");
         return;
     }
     if (biwfa)
     {
-        if (fscanf(file, "%d %lld %ld", score, time_taken, memory) != 3) {
-            fprintf(stderr, "Failed to read score and time from score.txt\n");
+        if (getline(&line, &len, file) != -1) {
+            if (sscanf(line,"%d %lld %ld", score, time_taken, memory) != 3) {
+                fprintf(stderr, "Failed to read score, time, and memory from score.txt\n");
+            }
         }
+        if (getline(&line, &len, file) != -1) {
+            if (sscanf(line, "%s", CIGAR) != 0) {
+                fprintf(stderr, "Failed to read CIGAR from score.txt\n");
+            }
+        }
+        // if (fscanf(file, "%d %lld %ld", score, time_taken, memory) != 3) {
+        //     fprintf(stderr, "Failed to read score, time, and memory from score.txt\n");
+        // }
+        // if (fscanf(file, "%s", CIGAR) != 1)
+        // {
+        //     fprintf(stderr, "Failed to read CIGAR from score.txt\n");
+        // }
+        free(line);
     }
     else {
-        if (fscanf(file, "%lld %ld", time_taken, memory) != 2) {
-            fprintf(stderr, "Failed to read time from score.txt\n");
+        if (getline(&line, &len, file) != -1) {
+            if (sscanf(line, "%lld %ld", time_taken, memory) != 2) {
+                fprintf(stderr, "Failed to read time from score.txt\n");
+            }
         }
+        free(line);
+        // if (fscanf(file, "%lld %ld", time_taken, memory) != 2) {
+        //     fprintf(stderr, "Failed to read time from score.txt\n");
+        // }
     }
     
     
@@ -286,7 +309,7 @@ void execute_wfa_basic(char* pattern, char* text, bool avx, int* score, long lon
     }
 }
 
-void execute_wfa_basic_modded(int mode, int* score, long long* time_taken, long* mem) {
+void execute_wfa_basic_modded(int mode, int* score, long long* time_taken, long* mem, char* CIGAR) {
     pid_t pid = fork();
     if (pid < 0) {
         perror("Fork failed");
@@ -372,7 +395,7 @@ void execute_wfa_basic_modded(int mode, int* score, long long* time_taken, long*
         }
         // const char* file_name = avx ? "/home/retraxius/avx/score.txt" : "/home/retraxius/orig/score.txt";
         bool biwfa = mode < 5 ? true : false ;
-        read_metrics_modded(biwfa, wfa_path, score, time_taken, mem);
+        read_metrics_modded(biwfa, wfa_path, score, time_taken, mem, CIGAR);
         
         if (WIFEXITED(status)) {
             // printf("wfa_basic exited with status %d\n", WEXITSTATUS(status));
@@ -444,11 +467,11 @@ void write_output(const char* file_name, char* text, char* pattern, int text_ind
 
     fclose(file);
 }
-void write_output_modded(const char* file_name, char* libname, char* text, char* pattern, int text_index, int pattern_index, long long* time, int score, long mem) {
+void write_output_modded(const char* file_name, char* libname, char* text, char* pattern, int text_index, int pattern_index, long long* time, int score, long mem, char* CIGAR) {
     const char* dir_name = "output";
 
     char full_path[256];
-    snprintf(full_path, sizeof(full_path), "%s/%s/%s.txt", dir_name, libname, file_name);
+    snprintf(full_path, sizeof(full_path), "%s/%s/%s", dir_name, libname, file_name);
 
     FILE* file = fopen(full_path, "a+");
     
@@ -460,18 +483,19 @@ void write_output_modded(const char* file_name, char* libname, char* text, char*
     fprintf(file, "Pattern\t[Sequence %04d] (Length %05ld): %s\n", pattern_index, strlen(pattern), pattern);
     fprintf(file, "Text\t[Sequence %04d] (Length %05ld): %s\n", text_index, strlen(text), text);
     fprintf(file, "Execution Time (%s_%s)\t: %.4f ms\n", libname, file_name, time[0]/1000000.0f);
-    fprintf(file, "Peak Memory Consumed: %ld kb", mem)
+    fprintf(file, "Peak Memory Consumed: %ld kb\n", mem);
+    fprintf(file, "CIGAR: %s", CIGAR);
     fprintf(file, "Score: %d\n\n", score);
     fprintf(file, "----------------------------\n\n");
 
     fclose(file);
 }
 
-void clear_file(const char* file_name) {
+void clear_file(const char* file_name, char* libname) {
     const char* dir_name = "output";
 
     char full_path[256];
-    snprintf(full_path, sizeof(full_path), "%s/%s-score.txt", dir_name, file_name);
+    snprintf(full_path, sizeof(full_path), "%s/%s/%s", dir_name, libname, file_name);
 
     FILE* file = fopen(full_path, "w");
 
@@ -499,57 +523,53 @@ void clear_file_modded(const char* file_name) {
     fclose(file);
 }
 
-void getTextFilesFromDir(const char* testcase, char **file_paths) {
-    // const char* directory = "./test_cases";
-    char *directory;  // Change this to your directory
-    snprintf(directory, sizeof(MAX_PATH_LENGTH), "./test_cases/%s", testcase);
+int getTextFilesFromDir(const char* testcase, char ***file_paths) {
+    char directory[100] = "";
+    snprintf(directory, sizeof(directory), "./test_cases/%s", testcase);
 
+    size_t file_count = 0;
     struct dirent *entry;
-
     DIR *dp = opendir(directory);
     if (dp == NULL) {
         perror("opendir");
+        return -1;
     }
-    size_t file_count = 0;
 
     while ((entry = readdir(dp)) != NULL) {
-        // Skip "." and ".."
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
             continue;
-        
-        // Allocate memory for the new path
-        file_paths = realloc(file_paths, sizeof(char *) * (file_count + 1));
-        if (!file_paths) {
-            perror("realloc");
-            closedir(dp);
-        }
 
-        // Construct full path
-        char full_path[MAX_PATH_LENGTH];
+        char full_path[1024];
         snprintf(full_path, sizeof(full_path), "%s/%s", directory, entry->d_name);
 
-        // Save the path
         struct stat statbuf;
-        
-        if(stat(full_path, &statbuf) == -1) {
-            perror("[stat]: Path is invalid.");
+        if (stat(full_path, &statbuf) == -1) {
+            perror("[stat]");
+            continue;
         }
 
-        if (S_ISREG(statbuf.st_mode))
-        {
-            file_paths[file_count] = strdup(full_path);
-            if (!file_paths[file_count]) {
+        if (S_ISREG(statbuf.st_mode)) {
+            char **temp = realloc(*file_paths, sizeof(char *) * (file_count + 1));
+            if (!temp) {
+                perror("realloc");
+                closedir(dp);
+                return -1;
+            }
+
+            *file_paths = temp;
+            (*file_paths)[file_count] = strdup(full_path);
+            if (!(*file_paths)[file_count]) {
                 perror("strdup");
                 closedir(dp);
+                return -1;
             }
 
             file_count++;
         }
-        
-        
     }
 
     closedir(dp);
+    return file_count;
 }
 
 int getLibMode(const char *key) {
@@ -561,11 +581,12 @@ int getLibMode(const char *key) {
         {"minimap2", 5},
         {"edlib", 6},
     };
-
+    //fprintf(stderr, "[DEBUG]: getLibMode start.\n");
     for (int i = 0; i < sizeof(table)/sizeof(table[0]); i++) {
         if (strcmp(table[i].key, key) == 0)
             return table[i].value;
     }
+    //fprintf(stderr, "[DEBUG]: getLibMode end.\n");
     return -1;  // or default
 }
 
@@ -580,13 +601,13 @@ int main(int argc, char * const argv[]) {
     struct match best_matches[5];
     struct match curr_match;
 
-    for (int i = 0; i < 5; i++) {
-        best_matches[i].score = -2147483648;
-        best_matches[i].text = NULL;
-        best_matches[i].text_index = 0;
-        best_matches[i].time[0] = 0;
-        best_matches[i].time[1] = 0;
-    }
+    // for (int i = 0; i < 5; i++) {
+    //     best_matches[i].score = -2147483648;
+    //     best_matches[i].text = NULL;
+    //     best_matches[i].text_index = 0;
+    //     best_matches[i].time[0] = 0;
+    //     best_matches[i].time[1] = 0;
+    // }
 
     int total_score[2] = {0, 0};
     int curr_score[2];
@@ -599,103 +620,119 @@ int main(int argc, char * const argv[]) {
     long long average_time_per_len[2];
     long long time_taken[2];
 
-    int num_len = 5;
-    // const char* file_names[] = {"150", "300", "500", "750", "1000"};
-    // const char* ref_file = "./test_cases/UNIPROT_DNA_ALL.fasta.txt";
-    //100K bp
-    const char* ref_file_l = "./test_cases/longSplits_100K/200K_idx_1.txt";
-    const char* ref_file_l_err10 = "./test_cases/longSplits_100K/200K_idx_1_err10.txt";
-    const char* ref_file_scale = "./test_cases/2.5Kbp_Scalability.txt";
-    const char* ref_file_l_err20 = "./test_cases/longSplits_100K/200K_idx_1_err20.txt";
-    //10k bp
-    const char* ref_med = "./test_cases/medSplits_10K/001_med.txt";
-    //50bp or 100 character length
-    const char* ref_short = "./test_cases/shortSplits_100/001_modded.txt";
-    char curr_file[100];
-    char target_file[100];
+    // int num_len = 5;
+    // // const char* file_names[] = {"150", "300", "500", "750", "1000"};
+    // // const char* ref_file = "./test_cases/UNIPROT_DNA_ALL.fasta.txt";
+    // //100K bp
+    // const char* ref_file_l = "./test_cases/longSplits_100K/200K_idx_1.txt";
+    // const char* ref_file_l_err10 = "./test_cases/longSplits_100K/200K_idx_1_err10.txt";
+    // const char* ref_file_scale = "./test_cases/2.5Kbp_Scalability.txt";
+    // const char* ref_file_l_err20 = "./test_cases/longSplits_100K/200K_idx_1_err20.txt";
+    // //10k bp
+    // const char* ref_med = "./test_cases/medSplits_10K/001_med.txt";
+    // //50bp or 100 character length
+    // const char* ref_short = "./test_cases/shortSplits_100/001_modded.txt";
+    // char curr_file[100];
+    // char target_file[100];
 
-    srand(time(NULL));
-    int total_text = count_sequences_modded(ref_med);
-    int num_text = 10;
-    if (total_text <= 0) {
-        fprintf(stderr, "No sequences found in file.\n");
-        return EXIT_FAILURE;
-    }
+    // srand(time(NULL));
+    // int total_text = count_sequences_modded(ref_med);
+    // int num_text = 10;
+    // if (total_text <= 0) {
+    //     fprintf(stderr, "No sequences found in file.\n");
+    //     return EXIT_FAILURE;
+    // }
     //start of fixed version
     //declarations
-    char library[100];
-    char testLen[100];
-    char **queryFiles;
-    char **referenceFiles;
-    char referenceDir[100];
+    char library[100] = "biwavex";
+    char testLen[100] = "10K";
+    char **queryFiles = NULL;
+    char **referenceFiles = NULL;
+    char referenceDir[100] = "";
+    char CIGAR[10000000];
     int libMode = 0;
     int option = 0;
 
     bool invalidArgs = false;
     struct dirent *entry;
     //main area
-    while ((option = getopt(argc, argv, "l:t")))
+    fprintf(stderr, "Starting Benchmark\n");
+    while ((option = getopt(argc, argv, "l:t:")) != -1)
     {
         switch (option) {
-            case 'l': strcpy(library, optarg); break;
-            case 't': strcpy(testLen, optarg); break;
+            case 'l': strcpy(library, optarg); fprintf(stderr, "Starting Lib Get\n"); break;
+            case 't': strcpy(testLen, optarg); fprintf(stderr, "Starting TestLen Get\n"); break;
             default: invalidArgs = true;
         }
     }
 
     //decipher args
+    fprintf(stderr, "[DEBUG]: Lib = {%s} & testLen = {%s}\n", library, testLen);
     libMode = getLibMode(library);
+    if (libMode < 1)
+    {
+        perror("Parsing");
+        return EXIT_FAILURE;
+    }
+    
 
     // //confirm if testcase dir exists
     snprintf(referenceDir, sizeof(referenceDir), "%s/references", testLen);
-    getTextFilesFromDir(testLen, queryFiles);
-    getTextFilesFromDir(referenceDir, referenceFiles);
-
+    int numQuery = getTextFilesFromDir(testLen, &queryFiles);
+    int numReferences = getTextFilesFromDir(referenceDir, &referenceFiles);
     //main loop
-    int queryLen = sizeof(queryFiles)/sizeof(queryFiles[0]);
-    int referenceLen = sizeof(referenceFiles)/sizeof(referenceFiles[0]);
-    for (size_t i = 0; i < queryLen; i++)
+    for (int i = 0; i < numQuery; i++)
     {
-        char *querySource = queryFiles[i];
-
-        for (size_t j = 0; j < referenceLen; j++)
+        fprintf(stderr, "Query File [%d]: {%s}\n", i, queryFiles[i]);
+        char* querySource = queryFiles[i];
+        for (int j = 0; j < numReferences; j++)
         {
             char* referenceSource = referenceFiles[j];
+            char* minifile = strrchr(referenceSource, '/');
+            minifile++;
+            // minifile[strlen(minifile) - 4] = '\0'; //.txt suffix removal
+            char tempfile[100];
+            strcpy(tempfile, minifile);
+            tempfile[strlen(tempfile) - 4] = '\0';
+            fprintf(stderr, "Reference File [%d]: {%s}\n", i, referenceFiles[j]);
             //extract the total number of sequences
             clear_file_modded(library);
-            clear_file(library);
+            clear_file(minifile, library);
 
             int querySeqs = count_sequences_modded(querySource);
-            int referenceSeqs = count_sequences(referenceSource);
+            int referenceSeqs = count_sequences_modded(referenceSource);
 
-            if ((querySeqs <= 0 || referenceSeqs <= 0) && (querySeqs < referenceSeqs || referenceSeqs < querySeqs))
+            fprintf(stderr, "Query Seq Count [%d] | Reference Seq Count [%d] \n", querySeqs, referenceSeqs);
+
+            if ((querySeqs <= 0 || referenceSeqs <= 0) || (querySeqs < referenceSeqs || referenceSeqs < querySeqs))
             {
                 fprintf(stderr, "[ERROR]: Queries are lacking or One of the files are empty.");
                 return EXIT_FAILURE;
             }
             
-            for (size_t z = 0; z < querySeqs; z++)
+            for (int z = 0; z < querySeqs; z++)
             {
                 char *query = extract_sequence_modded(querySource, z);
 
                 if (!query)
                 {
                     fprintf(stderr, "Failed to get query--- Skipping...\n");
-                    continue;
+                    return EXIT_FAILURE;
                 }
                 
                 char *reference = extract_sequence_modded(referenceSource, z);
+                fprintf(stderr, "RefSource: %s\n", referenceSource);
                 if (!reference)
                 {
                     fprintf(stderr, "Failed to get reference--- Skipping...\n");
-                    continue;
+                    return EXIT_FAILURE;
                 }
 
                 //Write Sequences into file for Reading
                 write_inputfile(reference, "./inputs/input1.txt");
                 write_inputfile(query, "./inputs/input2.txt");
 
-                execute_wfa_basic_modded(libMode, &curr_score[0], &time_taken[0], &curr_mem[0]);
+                execute_wfa_basic_modded(libMode, &curr_score[0], &time_taken[0], &curr_mem[0], &CIGAR);
 
                 total_score[0] += curr_score[0];
                         
@@ -704,17 +741,12 @@ int main(int argc, char * const argv[]) {
                 curr_match.text_index = z;
                 curr_match.time[0] = time_taken[0];
                 //requires filenames to be cleaned
-                char cleanedName[100];
                 //take filename, remove suffix
-                char* minifile = strrchr(referenceSource, '/');
-                minifile++;
-                strncpy(referenceSource, minifile, sizeof(referenceSource));
-                referenceSource[strlen(referenceSource) - 4] = '\0'; //.txt suffix removal
 
-                write_output_modded(referenceSource, library, query, reference, z, z, time_taken, curr_score[0], curr_mem[0]);
+                write_output_modded(minifile, library, query, reference, z, z, time_taken, curr_score[0], curr_mem[0], CIGAR);
                 free(query);
                 free(reference);
-                printf("Finished (%d/%d).\n", z, referenceSeqs);
+                printf("Finished (%d/%d).\n", z+1, referenceSeqs);
             }
             
         }
