@@ -28,9 +28,10 @@
  * AUTHOR(S): Santiago Marco-Sola <santiagomsola@gmail.com>
  * DESCRIPTION: WFA Sample-Code
  */
-
+#include <time.h>
 #include "wavefront/wavefront_align.h"
 #include "wavefront/wavefront_plot.h"
+#include <sys/resource.h>
 
 int main(int argc, char* argv[]) {
     // Check if pattern and text are provided as command-line arguments
@@ -136,19 +137,23 @@ int main(int argc, char* argv[]) {
   // fprintf(stderr,"WFA-Alignment returns score %d\n",wf_aligner->cigar->score);
 
   // // Display alignment
-  fprintf(stderr,"  PATTERN  %s\n",pattern);
-  fprintf(stderr,"  TEXT     %s\n",text);
-  fprintf(stderr,"  SCORE (RE)COMPUTED %d\n",
-       cigar_score_gap_affine(wf_aligner->cigar,&attributes.affine_penalties));
-  cigar_print_pretty(stderr,wf_aligner->cigar,
-      pattern,strlen(pattern),text,strlen(text));
+  // fprintf(stderr,"  PATTERN  %s\n",pattern);
+  // fprintf(stderr,"  TEXT     %s\n",text);
+  // fprintf(stderr,"  SCORE (RE)COMPUTED %d\n",
+  //      cigar_score_gap_affine(wf_aligner->cigar,&attributes.affine_penalties));
+  // cigar_print_pretty(stderr,wf_aligner->cigar,
+  //     pattern,strlen(pattern),text,strlen(text));
 
      long long elapsed_time = (end.tv_sec - start.tv_sec) * 1e9 + (end.tv_nsec - start.tv_nsec);
     
     // printf("%d\n", cigar_score_gap_affine(wf_aligner->cigar,&attributes.affine_penalties));
+    struct rusage usage;
+    getrusage(RUSAGE_SELF, &usage);
+    long peak_memory_kb = usage.ru_maxrss;
 
-    FILE *file2 = fopen("../../scores/biwfa_og-score.txt", "w");
-    fprintf(file2, "%d %lld\n", score, elapsed_time);
+    FILE *file2 = fopen("./scores/biwfa_og-score.txt", "w");
+    fprintf(file2, "%d %lld %ld\n", score, elapsed_time, peak_memory_kb);
+    fprinf(file2, "%s\n" wf_aligner->cigar)
     fclose(file2);
     
     // wavefront_plot_print(stderr, wf_aligner);
