@@ -677,15 +677,15 @@ int main(int argc, char * const argv[]) {
     
 
     // //confirm if testcase dir exists
-    snprintf(referenceDir, sizeof(referenceDir), "%s/references", testLen);
+    snprintf(referenceDir, sizeof(referenceDir), "%s/queries", testLen);
     int numQuery = getTextFilesFromDir(testLen, &queryFiles);
-    int numReferences = getTextFilesFromDir(referenceDir, &referenceFiles);
+    int numQueries = getTextFilesFromDir(referenceDir, &referenceFiles);
     //main loop
     for (int i = 0; i < numQuery; i++)
     {
         fprintf(stderr, "Query File [%d]: {%s}\n", i, queryFiles[i]);
         char* querySource = queryFiles[i];
-        for (int j = 0; j < numReferences; j++)
+        for (int j = 0; j < numQueries; j++)
         {
             char* referenceSource = referenceFiles[j];
             char* minifile = strrchr(referenceSource, '/');
@@ -700,7 +700,7 @@ int main(int argc, char * const argv[]) {
             clear_file(minifile, library);
 
             int querySeqs = count_sequences_modded(querySource);
-            int referenceSeqs = count_sequences_modded(referenceSource);
+            int querieseqs = count_sequences_modded(referenceSource);
 
             fprintf(stderr, "Query Seq Count [%d] | Reference Seq Count [%d] \n", querySeqs, referenceSeqs);
 
