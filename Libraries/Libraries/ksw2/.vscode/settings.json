@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "ksw2.h": "c",
+        "kalloc.h": "c"
+    }
+}

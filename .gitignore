@@ -80,3 +80,8 @@ TAGS
 
 /meson-build
 /installation
+
+.*.swp
+*.dSYM
+*.a
+*.o
