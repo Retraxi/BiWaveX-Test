@@ -690,7 +690,7 @@ int main(int argc, char * const argv[]) {
             char tempfile[100];
             strcpy(tempfile, minifile);
             tempfile[strlen(tempfile) - 4] = '\0';
-            fprintf(stderr, "Reference File [%d]: {%s}\n", i, referenceFiles[j]);
+            fprintf(stderr, "Reference File [%d]: {%s}\n", j, referenceFiles[j]);
             //extract the total number of sequences
             clear_file_modded(library);
             clear_file(minifile, library);
