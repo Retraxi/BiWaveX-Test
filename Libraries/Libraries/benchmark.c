@@ -247,7 +247,7 @@ void read_metrics_modded(bool biwfa, const char* file_name, int* score, long lon
             }
         }
         if (getline(&line, &len, file) != -1) {
-            if (sscanf(line, "%s", CIGAR) != 0) {
+            if (sscanf(line, "%s", CIGAR) != 1) {
                 fprintf(stderr, "Failed to read CIGAR from score.txt\n");
             }
         }
@@ -484,8 +484,8 @@ void write_output_modded(const char* file_name, char* libname, char* text, char*
     fprintf(file, "Text\t[Sequence %04d] (Length %05ld): %s\n", text_index, strlen(text), text);
     fprintf(file, "Execution Time (%s_%s)\t: %.4f ms\n", libname, file_name, time[0]/1000000.0f);
     fprintf(file, "Peak Memory Consumed: %ld kb\n", mem);
-    fprintf(file, "CIGAR: %s", CIGAR);
-    fprintf(file, "Score: %d\n\n", score);
+    fprintf(file, "CIGAR: %s\n", CIGAR);
+    fprintf(file, "Score: %d\n", score);
     fprintf(file, "----------------------------\n\n");
 
     fclose(file);
@@ -580,6 +580,7 @@ int getLibMode(const char *key) {
         {"ksw2",   4},
         {"minimap2", 5},
         {"edlib", 6},
+        {"nw", 7}
     };
     //fprintf(stderr, "[DEBUG]: getLibMode start.\n");
     for (int i = 0; i < sizeof(table)/sizeof(table[0]); i++) {
@@ -591,11 +592,6 @@ int getLibMode(const char *key) {
 }
 
 int main(int argc, char * const argv[]) {
-    bool longCase = true; //personal switch
-    bool alternating = true;
-    bool twofiles = false;
-    int num_iters = 1;
-    int num_seq = 5;
     
     struct timespec start, end;
     struct match best_matches[5];
@@ -649,7 +645,7 @@ int main(int argc, char * const argv[]) {
     char **queryFiles = NULL;
     char **referenceFiles = NULL;
     char referenceDir[100] = "";
-    char CIGAR[10000000];
+    char CIGAR[1000000];
     int libMode = 0;
     int option = 0;
 
@@ -677,15 +673,15 @@ int main(int argc, char * const argv[]) {
     
 
     // //confirm if testcase dir exists
-    snprintf(referenceDir, sizeof(referenceDir), "%s/queries", testLen);
+    snprintf(referenceDir, sizeof(referenceDir), "%s/references", testLen);
     int numQuery = getTextFilesFromDir(testLen, &queryFiles);
-    int numQueries = getTextFilesFromDir(referenceDir, &referenceFiles);
+    int numReferences = getTextFilesFromDir(referenceDir, &referenceFiles);
     //main loop
     for (int i = 0; i < numQuery; i++)
     {
         fprintf(stderr, "Query File [%d]: {%s}\n", i, queryFiles[i]);
         char* querySource = queryFiles[i];
-        for (int j = 0; j < numQueries; j++)
+        for (int j = 0; j < numReferences; j++)
         {
             char* referenceSource = referenceFiles[j];
             char* minifile = strrchr(referenceSource, '/');
@@ -700,7 +696,7 @@ int main(int argc, char * const argv[]) {
             clear_file(minifile, library);
 
             int querySeqs = count_sequences_modded(querySource);
-            int querieseqs = count_sequences_modded(referenceSource);
+            int referenceSeqs = count_sequences_modded(referenceSource);
 
             fprintf(stderr, "Query Seq Count [%d] | Reference Seq Count [%d] \n", querySeqs, referenceSeqs);
 
@@ -732,7 +728,7 @@ int main(int argc, char * const argv[]) {
                 write_inputfile(reference, "./inputs/input1.txt");
                 write_inputfile(query, "./inputs/input2.txt");
 
-                execute_wfa_basic_modded(libMode, &curr_score[0], &time_taken[0], &curr_mem[0], &CIGAR);
+                execute_wfa_basic_modded(libMode, &curr_score[0], &time_taken[0], &curr_mem[0], CIGAR);
 
                 total_score[0] += curr_score[0];
                         
