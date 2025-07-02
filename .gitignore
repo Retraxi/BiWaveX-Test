@@ -51,3 +51,32 @@ examples/output/best_score/1000/
 
 # Jupyter Notebook auto0generated files
 .ipynb_checkpoints/
+# Compiled Object files
+*.slo
+*.lo
+*.o
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+
+# Build directory
+build/*
+!build/README.md
+
+# Documentation
+docs/
+
+callgrind.out.*
+
+core
+
+TAGS
+
+/meson-build
+/installation
