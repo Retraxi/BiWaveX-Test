@@ -232,6 +232,7 @@ void read_metrics(const char* file_name, int* score, long long* time_taken) {
     fclose(file);
 }
 void read_metrics_modded(bool biwfa, const char* file_name, int* score, long long* time_taken, long* memory, char* CIGAR) {
+    fprintf(stderr, "[DEBUG]: Read Metrics Modded\n");
     FILE *file = fopen(file_name, "r");
     char *line = NULL;
     size_t len = 0;
@@ -406,6 +407,7 @@ void execute_wfa_basic_modded(int mode, int* score, long long* time_taken, long*
 }
 
 void write_inputfile(char* sequence, const char* filename) {
+    fprintf(stderr, "[DEBUG]: Writing Input File\n");
     int64_t count = 0;
     FILE* file = fopen(filename, "w");
     if (!file)
@@ -468,6 +470,7 @@ void write_output(const char* file_name, char* text, char* pattern, int text_ind
     fclose(file);
 }
 void write_output_modded(const char* file_name, char* libname, char* text, char* pattern, int text_index, int pattern_index, long long* time, int score, long mem, char* CIGAR) {
+    fprintf(stderr, "[DEBUG]: Write Output Modded\n");
     const char* dir_name = "output";
 
     char full_path[256];

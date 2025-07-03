@@ -85,3 +85,4 @@ TAGS
 *.a
 *.o
 
+outputData/

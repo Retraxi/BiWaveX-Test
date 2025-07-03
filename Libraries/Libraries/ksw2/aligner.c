@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
   char* pattern = NULL;
   char * text = NULL;
   //read from file
-  FILE* file = fopen("../inputs/input1.txt", "r");
+  FILE* file = fopen("./inputs/input1.txt", "r");
   if (!file)
   {
     perror("Error opening file");
@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
   }
 
   //read from file 2
-  file = fopen("../inputs/input2.txt", "r");
+  file = fopen("./inputs/input2.txt", "r");
   if (!file)
   {
     perror("Error opening file");
@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
     struct timespec start, end;
     clock_gettime(CLOCK_MONOTONIC, &start);
     
-    score = align(pattern, text, 0, 4, 6, 2);
+    score = align(pattern, text, 0, -4, -6, -2);
     
     clock_gettime(CLOCK_MONOTONIC, &end);
     long long elapsed_time = (end.tv_sec - start.tv_sec) * 1e9 + (end.tv_nsec - start.tv_nsec);
