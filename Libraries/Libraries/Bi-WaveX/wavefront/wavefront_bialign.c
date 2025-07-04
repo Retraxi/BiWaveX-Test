@@ -661,7 +661,6 @@ int wavefront_bialign_find_breakpoint(
      */
     //Gap Affine Only
     ++score_forward;
-    ++score_forward;
     (*wf_align_compute)(wf_forward,score_forward);
     if (plot_enabled) wavefront_plot(wf_forward,score_forward,align_level); // Plot
     // Extend
@@ -675,7 +674,6 @@ int wavefront_bialign_find_breakpoint(
      * Compute next wavefront (Reverse)
      */
     //Gap Affine
-    ++score_reverse;
     ++score_reverse;
     (*wf_align_compute)(wf_reverse,score_reverse);
     if (plot_enabled) wavefront_plot(wf_reverse,score_reverse,align_level); // Plot
