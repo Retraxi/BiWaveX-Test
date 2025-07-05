@@ -125,3 +125,7 @@ Libraries/Libraries/output/biwfa_og/80K_err20.txt
 Libraries/Libraries/output/biwfa_og/80K_err30.txt
 Libraries/Libraries/output/biwfa_og/80K_err40.txt
 Libraries/Libraries/output/biwfa_og/100K_seq2.txt
+Libraries/Libraries/inputs/input1.txt
+Libraries/Libraries/inputs/input2.txt
+Libraries/Libraries/scores/biwavex-score.txt
+Libraries/Libraries/inputs/input1.txt
