@@ -680,7 +680,7 @@ int main(int argc, char * const argv[]) {
     int numQuery = getTextFilesFromDir(testLen, &queryFiles);
     int numReferences = getTextFilesFromDir(referenceDir, &referenceFiles);
     //main loop
-    for (int i = 0; i < numQuery; i++)
+    for (int i = 0; i < numReferences; i++)
     {
         fprintf(stderr, "Query File [%d]: {%s}\n", i, queryFiles[i]);
         char* querySource = queryFiles[i];
