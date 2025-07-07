@@ -2,8 +2,8 @@
 gcc benchmark.c -O3 -g -o benchmark -lm
 
 #iterate
-libraries=("biwavex" "biwfa_og")
-testcases=("80K_seq" "250bp" "250bp_seq")
+libraries=("biwfa_avx")
+testcases=("100K_seq" "80K_seq" "50K_seq" "30K_seq" "10K_seq")
 
 for i in "${libraries[@]}"
 do
