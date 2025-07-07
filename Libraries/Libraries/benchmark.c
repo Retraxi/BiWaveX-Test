@@ -680,7 +680,7 @@ int main(int argc, char * const argv[]) {
     int numQuery = getTextFilesFromDir(testLen, &queryFiles);
     int numReferences = getTextFilesFromDir(referenceDir, &referenceFiles);
     //main loop
-    for (int i = 0; i < numQuery; i++)
+    for (int i = 0; i < numReferences; i++)
     {
         fprintf(stderr, "Query File [%d]: {%s}\n", i, queryFiles[i]);
         char* querySource = queryFiles[i];
@@ -703,9 +703,9 @@ int main(int argc, char * const argv[]) {
 
             fprintf(stderr, "Query Seq Count [%d] | Reference Seq Count [%d] \n", querySeqs, referenceSeqs);
 
-            if ((querySeqs <= 0 || referenceSeqs <= 0) || (querySeqs < referenceSeqs || referenceSeqs < querySeqs))
+            if ((querySeqs <= 0 || referenceSeqs <= 0))
             {
-                fprintf(stderr, "[ERROR]: Queries are lacking or One of the files are empty.");
+                fprintf(stderr, "[ERROR]: One of the files are empty.");
                 return EXIT_FAILURE;
             }
             
