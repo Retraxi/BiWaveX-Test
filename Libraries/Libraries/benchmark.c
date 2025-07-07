@@ -680,7 +680,7 @@ int main(int argc, char * const argv[]) {
     int numQuery = getTextFilesFromDir(testLen, &queryFiles);
     int numReferences = getTextFilesFromDir(referenceDir, &referenceFiles);
     //main loop
-    for (int i = 0; i < numReferences; i++)
+    for (int i = 0; i < numQuery; i++)
     {
         fprintf(stderr, "Query File [%d]: {%s}\n", i, queryFiles[i]);
         char* querySource = queryFiles[i];
@@ -709,7 +709,7 @@ int main(int argc, char * const argv[]) {
                 return EXIT_FAILURE;
             }
             
-            for (int z = 0; z < querySeqs; z++)
+            for (int z = 0; z < referenceSeqs; z++)
             {
                 char *query = extract_sequence_modded(querySource, z);
 
